@@ -1,0 +1,1284 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>数字フラッシュカード記憶ゲーム</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet" />
+    <style>
+      :root{
+        --bg:#eef2f7;
+        --bg-soft:#e6ecf3;
+        --surface:#ffffff;
+        --surface-2:#f3f6fa;
+        --surface-3:#eaf0f7;
+        --ink:#182233;
+        --ink-2:#33415c;
+        --muted:#66788f;
+        --line:#d7e0ec;
+        --line-strong:#b9c8db;
+        --accent:#e4572e;
+        --accent-hover:#d14a24;
+        --accent-ink:#ffffff;
+        --teal:#0f766e;
+        --teal-bg:#ccfbf1;
+        --amber:#b45309;
+        --amber-bg:#fef3c7;
+        --good:#15803d;
+        --good-bg:#dcfce7;
+        --bad:#b91c1c;
+        --bad-bg:#fee2e2;
+        --digit-bg:#182233;
+        --digit-ink:#ffffff;
+        --shadow:0 10px 30px rgba(24,34,51,.10), 0 2px 6px rgba(24,34,51,.06);
+        --shadow-sm:0 4px 14px rgba(24,34,51,.08);
+        --radius:20px;
+        --radius-sm:14px;
+      }
+      @media (prefers-color-scheme: dark){
+        :root{
+          --bg:#0f1724;
+          --bg-soft:#131e30;
+          --surface:#1a2639;
+          --surface-2:#212f47;
+          --surface-3:#25354f;
+          --ink:#eef2f8;
+          --ink-2:#cbd6e6;
+          --muted:#94a7be;
+          --line:#2e405e;
+          --line-strong:#3d5678;
+          --accent:#ff6b47;
+          --accent-hover:#ff7f5f;
+          --accent-ink:#ffffff;
+          --teal:#2dd4bf;
+          --teal-bg:#134e4a;
+          --amber:#fbbf24;
+          --amber-bg:#451a03;
+          --good:#4ade80;
+          --good-bg:#052e16;
+          --bad:#fca5a5;
+          --bad-bg:#450a0a;
+          --digit-bg:#f1f5f9;
+          --digit-ink:#182233;
+          --shadow:0 10px 30px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.25);
+          --shadow-sm:0 4px 14px rgba(0,0,0,.3);
+        }
+      }
+      *{box-sizing:border-box}
+      html,body{margin:0;padding:0}
+      body{
+        background:var(--bg);
+        color:var(--ink);
+        font-family:"Zen Maru Gothic","M PLUS Rounded 1c",system-ui,-apple-system,"Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif;
+        line-height:1.6;
+        -webkit-font-smoothing:antialiased;
+      }
+      button{font:inherit;cursor:pointer}
+      button:focus-visible, [tabindex]:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+
+      .wrap{max-width:680px;margin:0 auto;padding:18px 16px 36px}
+      @media(min-width:720px){.wrap{padding:28px 20px 48px}}
+
+      /* Top stats - only visible during game */
+      .stats{
+        display:none;
+        gap:8px;
+        flex-wrap:wrap;
+        margin-bottom:14px;
+      }
+      .stats.is-on{display:flex}
+      .stat{
+        flex:1 1 0;
+        min-width:96px;
+        background:var(--surface);
+        border:1px solid var(--line);
+        border-radius:14px;
+        padding:9px 12px 8px;
+        box-shadow:var(--shadow-sm);
+      }
+      .stat-label{font-size:11px;letter-spacing:.08em;font-weight:700;color:var(--muted);text-transform:none;line-height:1.2}
+      .stat-value{font-family:"M PLUS Rounded 1c",sans-serif;font-size:22px;font-weight:800;line-height:1.15;color:var(--ink)}
+      .stat-value small{font-size:13px;font-weight:700;color:var(--muted)}
+      .stat-value .flame{color:var(--accent)}
+
+      .progress-track{height:8px;background:var(--surface-3);border-radius:999px;overflow:hidden;margin-bottom:16px;display:none}
+      .progress-track.is-on{display:block}
+      .progress-fill{height:100%;background:var(--teal);border-radius:999px;width:0%;transition:width .45s ease}
+
+      .card{
+        background:var(--surface);
+        border:1px solid var(--line);
+        border-radius:var(--radius);
+        box-shadow:var(--shadow);
+        padding:22px 18px 20px;
+      }
+      @media(min-width:560px){.card{padding:28px 28px 24px}}
+
+      /* ---------- Start screen ---------- */
+      .lead{margin:0 0 6px;font-size:15px;font-weight:700;color:var(--teal);letter-spacing:.02em}
+      h1{
+        font-family:"M PLUS Rounded 1c",sans-serif;
+        font-size:clamp(26px,6vw,36px);
+        line-height:1.25;
+        font-weight:800;
+        margin:0 0 10px;
+        letter-spacing:.01em;
+      }
+      .intro{margin:0 0 20px;color:var(--ink-2);font-size:15.5px}
+
+      .how{
+        display:grid;
+        gap:10px;
+        margin:0 0 22px;
+      }
+      @media(min-width:560px){.how{grid-template-columns:1fr 1fr 1fr}}
+      .how-item{
+        background:var(--surface-2);
+        border:1px solid var(--line);
+        border-radius:16px;
+        padding:14px 14px 12px;
+      }
+      .how-num{
+        width:32px;height:32px;border-radius:999px;
+        display:grid;place-items:center;
+        background:var(--ink);color:var(--surface);
+        font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:15px;
+        margin-bottom:8px;
+      }
+      @media (prefers-color-scheme: dark){.how-num{background:var(--teal);color:#0f1724}}
+      .how-item strong{display:block;font-size:14.5px;line-height:1.4;margin-bottom:2px}
+      .how-item span{font-size:13px;color:var(--muted);line-height:1.5;display:block}
+
+      .field-label{font-size:13px;font-weight:800;letter-spacing:.06em;color:var(--muted);margin:0 0 10px}
+      .diff-grid{display:grid;gap:10px;margin-bottom:20px}
+      @media(min-width:560px){.diff-grid{grid-template-columns:1fr 1fr 1fr}}
+      .diff-btn{
+        text-align:left;
+        background:var(--surface);
+        border:2px solid var(--line);
+        border-radius:16px;
+        padding:14px 14px 12px;
+        color:var(--ink);
+        transition:border-color .15s, background .15s, transform .15s;
+      }
+      .diff-btn:hover{border-color:var(--line-strong)}
+      .diff-btn[aria-pressed="true"]{
+        border-color:var(--accent);
+        background:var(--surface-2);
+        box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+      }
+      .diff-name{font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+      .diff-digits{font-size:12px;font-weight:800;background:var(--digit-bg);color:var(--digit-ink);padding:3px 8px;border-radius:999px;white-space:nowrap}
+      .diff-desc{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.5}
+      .diff-time{font-size:12.5px;font-weight:700;color:var(--teal);margin-top:6px}
+      .mode-grid{display:grid;gap:10px;margin-bottom:20px}
+      @media(min-width:560px){.mode-grid{grid-template-columns:1fr 1fr}}
+
+      .btn-primary{
+        width:100%;
+        border:0;
+        background:var(--accent);
+        color:var(--accent-ink);
+        font-family:"M PLUS Rounded 1c",sans-serif;
+        font-weight:800;
+        font-size:19px;
+        letter-spacing:.02em;
+        padding:16px 20px;
+        border-radius:16px;
+        box-shadow:0 8px 20px rgba(228,87,46,.28);
+        transition:background .15s, transform .12s;
+      }
+      .btn-primary:hover{background:var(--accent-hover)}
+      .btn-primary:active{transform:scale(.985)}
+      .btn-secondary{
+        width:100%;
+        border:2px solid var(--line-strong);
+        background:var(--surface);
+        color:var(--ink);
+        font-weight:800;
+        font-size:16px;
+        padding:14px 18px;
+        border-radius:16px;
+      }
+      .btn-secondary:hover{background:var(--surface-2)}
+      .note{margin:14px 2px 0;font-size:13px;color:var(--muted);text-align:center}
+
+      /* ---------- Game screen ---------- */
+      .phase-label{
+        display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+        margin-bottom:14px;
+      }
+      .phase-title{font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:19px;line-height:1.3}
+      .phase-sub{font-size:13.5px;color:var(--muted);margin-top:2px}
+      .quit-btn{
+        border:1px solid var(--line);background:var(--surface-2);color:var(--muted);
+        font-size:13px;font-weight:700;padding:7px 12px;border-radius:999px;white-space:nowrap;
+      }
+      .quit-btn:hover{color:var(--ink)}
+
+      .flash-area{
+        background:var(--surface-2);
+        border:1.5px dashed var(--line-strong);
+        border-radius:18px;
+        min-height:168px;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        padding:22px 14px 18px;
+        text-align:center;
+      }
+      .flash-area.is-live{border-style:solid;border-color:var(--teal);background:var(--surface)}
+      .countdown-num{
+        font-family:"M PLUS Rounded 1c",sans-serif;
+        font-size:72px;font-weight:800;line-height:1;color:var(--accent);
+      }
+      .countdown-text{font-weight:700;color:var(--muted);margin-top:8px;font-size:15px}
+      .ready-text{font-size:16px;font-weight:700;color:var(--ink-2);padding:10px}
+
+      .digits{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center}
+      @media(max-width:420px){.digits{gap:6px}}
+      .digit-tile{
+        width:52px;height:64px;
+        display:grid;place-items:center;
+        background:var(--digit-bg);color:var(--digit-ink);
+        border-radius:12px;
+        font-family:"M PLUS Rounded 1c",sans-serif;
+        font-size:38px;font-weight:800;line-height:1;
+        box-shadow:0 6px 14px rgba(0,0,0,.18);
+      }
+      @media(max-width:420px){.digit-tile{width:42px;height:56px;font-size:32px}}
+      .digit-tile.is-small{width:44px;height:56px;font-size:32px}
+      @media(max-width:420px){.digit-tile.is-small{width:36px;height:48px;font-size:27px}}
+      .digit-tile.is-xsmall{width:36px;height:50px;font-size:27px;border-radius:10px}
+      @media(max-width:420px){.digit-tile.is-xsmall{width:29px;height:44px;font-size:23px;border-radius:9px}}
+      .digits.is-tight{gap:5px}
+      @media(max-width:420px){.digits.is-tight{gap:4px}}
+
+      .hidden-mark{
+        font-family:"M PLUS Rounded 1c",sans-serif;
+        font-size:28px;font-weight:800;letter-spacing:.35em;color:var(--muted);
+        padding-left:.35em;
+      }
+      .hidden-text{margin-top:8px;font-weight:700;color:var(--ink-2);font-size:15px}
+
+      .timer-track{height:10px;background:var(--surface-3);border-radius:999px;overflow:hidden;margin-top:16px;width:100%}
+      .timer-fill{height:100%;background:var(--amber);border-radius:999px;width:100%}
+      .timer-fill.animate{transition:width linear}
+      .timer-caption{font-size:12.5px;color:var(--muted);margin-top:7px;font-weight:700}
+
+      .tip{
+        margin-top:14px;
+        background:var(--amber-bg);
+        color:var(--amber);
+        border-radius:12px;
+        padding:10px 12px;
+        font-size:13.5px;font-weight:700;line-height:1.55;
+        text-align:left;
+      }
+      @media (prefers-color-scheme: dark){.tip{color:#fde68a}}
+
+      /* Choices */
+      .choices{margin-top:18px;display:none}
+      .choices.is-on{display:block}
+      .choices-title{font-weight:800;font-size:16px;margin:0 0 12px}
+      .choice-grid{display:grid;gap:10px}
+      @media(min-width:560px){.choice-grid{grid-template-columns:1fr 1fr}}
+      .choice-btn{
+        display:flex;align-items:center;gap:12px;
+        width:100%;text-align:left;
+        background:var(--surface);
+        border:2px solid var(--line);
+        border-radius:16px;
+        padding:14px 14px;
+        color:var(--ink);
+        transition:border-color .15s, background .15s, transform .12s;
+      }
+      .choice-btn:hover:not(:disabled){border-color:var(--teal)}
+      .choice-btn:active:not(:disabled){transform:scale(.99)}
+      .choice-btn:disabled{cursor:default;opacity:1}
+      .choice-key{
+        flex:0 0 auto;
+        width:30px;height:30px;border-radius:999px;
+        display:grid;place-items:center;
+        background:var(--surface-3);color:var(--muted);
+        font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:14px;
+      }
+      .choice-num{
+        font-family:"M PLUS Rounded 1c",sans-serif;
+        font-weight:800;
+        font-size:clamp(20px,5.2vw,26px);
+        letter-spacing:.14em;
+        line-height:1;
+        word-break:break-all;
+      }
+      .choice-num.is-long{font-size:clamp(16px,4.4vw,21px);letter-spacing:.07em;line-height:1.25}
+      .choice-btn.is-correct{border-color:var(--good);background:var(--good-bg)}
+      .choice-btn.is-correct .choice-key{background:var(--good);color:#fff}
+      @media (prefers-color-scheme: dark){.choice-btn.is-correct .choice-key{color:#052e16}}
+      .choice-btn.is-wrong{border-color:var(--bad);background:var(--bad-bg)}
+      .choice-btn.is-wrong .choice-key{background:var(--bad);color:#fff}
+      @media (prefers-color-scheme: dark){.choice-btn.is-wrong .choice-key{color:#450a0a}}
+      .choice-btn.is-dim{opacity:.55}
+
+      /* Sort mode */
+      .sort-box{margin-top:18px;display:none}
+      .sort-box.is-on{display:block}
+      .sort-label{font-size:12.5px;font-weight:800;letter-spacing:.05em;color:var(--muted);margin:14px 0 8px}
+      .sort-label:first-of-type{margin-top:0}
+      .sort-answer{display:flex;gap:6px;flex-wrap:wrap}
+      .sort-slot{width:44px;height:56px;display:grid;place-items:center;border:2px dashed var(--line-strong);border-radius:11px;background:var(--surface-2);font-family:"M PLUS Rounded 1c",sans-serif;font-size:28px;font-weight:800;color:var(--muted)}
+      .sort-slot.is-filled{border-style:solid;border-color:var(--teal);background:var(--surface);color:var(--ink)}
+      .sort-slot.is-xsmall{width:32px;height:46px;font-size:23px}
+      .sort-box.is-good .sort-slot.is-filled{border-color:var(--good);background:var(--good-bg)}
+      .sort-box.is-bad .sort-slot.is-filled{border-color:var(--bad);background:var(--bad-bg)}
+      @media(max-width:420px){.sort-slot{width:38px;height:50px;font-size:25px}.sort-slot.is-xsmall{width:28px;height:42px;font-size:21px}}
+      .sort-tiles{display:flex;gap:8px;flex-wrap:wrap}
+      .sort-tile{width:52px;height:64px;border:0;display:grid;place-items:center;background:var(--digit-bg);color:var(--digit-ink);border-radius:12px;font-family:"M PLUS Rounded 1c",sans-serif;font-size:34px;font-weight:800;line-height:1;box-shadow:0 6px 14px rgba(0,0,0,.18)}
+      .sort-tile.is-xsmall{width:38px;height:52px;font-size:26px}
+      .sort-tile:disabled{opacity:.22;box-shadow:none;cursor:default}
+      .sort-tile:active:not(:disabled){transform:scale(.96)}
+      @media(max-width:420px){.sort-tile{width:44px;height:56px;font-size:29px}.sort-tile.is-xsmall{width:33px;height:46px;font-size:23px}}
+      .sort-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+      .sort-submit{grid-column:1 / -1;width:100%;border:0;background:var(--teal);color:#fff;font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:17px;padding:14px 18px;border-radius:16px}
+      @media (prefers-color-scheme: dark){.sort-submit{color:#0f1724}}
+      .sort-submit:disabled{opacity:.45;cursor:default}
+      .sort-sub-btn{border:2px solid var(--line-strong);background:var(--surface);color:var(--ink);font-weight:800;font-size:14.5px;padding:11px 10px;border-radius:14px}
+      .sort-sub-btn:disabled{opacity:.45;cursor:default}
+
+      .feedback{
+        display:none;margin-top:16px;border-radius:14px;padding:14px 14px 12px;
+      }
+      .feedback.is-on{display:block}
+      .feedback.is-good{background:var(--good-bg);color:var(--good)}
+      .feedback.is-bad{background:var(--bad-bg);color:var(--bad)}
+      .feedback-title{font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:18px;line-height:1.3}
+      .feedback-body{font-size:14.5px;font-weight:700;margin-top:3px;color:var(--ink)}
+      .feedback-body strong{letter-spacing:.12em}
+      .next-wrap{margin-top:14px;display:none}
+      .next-wrap.is-on{display:block}
+
+      /* ---------- Result ---------- */
+      .result-hero{text-align:center;padding:6px 0 4px}
+      .stars{display:flex;justify-content:center;gap:6px;margin-bottom:10px}
+      .stars svg{width:34px;height:34px}
+      .star-on{color:#f59e0b}
+      .star-off{color:var(--line-strong)}
+      .result-title{font-family:"M PLUS Rounded 1c",sans-serif;font-size:clamp(24px,6vw,32px);font-weight:800;line-height:1.3;margin:0 0 6px}
+      .result-msg{color:var(--ink-2);font-size:15px;margin:0 auto;max-width:46ch}
+      .score-big{
+        font-family:"M PLUS Rounded 1c",sans-serif;
+        font-size:54px;font-weight:800;line-height:1;margin:18px 0 2px;color:var(--accent);
+      }
+      .score-label{font-size:13px;font-weight:800;letter-spacing:.08em;color:var(--muted)}
+      .result-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:20px 0}
+      @media(max-width:420px){.result-stats{grid-template-columns:1fr 1fr 1fr;gap:8px}}
+      .rstat{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center}
+      .rstat b{font-family:"M PLUS Rounded 1c",sans-serif;font-size:20px;display:block;line-height:1.2}
+      .rstat span{font-size:12px;font-weight:700;color:var(--muted)}
+      .history{margin:0 0 20px;border-top:1px solid var(--line);padding-top:14px}
+      .history h2{font-size:14px;margin:0 0 10px;color:var(--muted);letter-spacing:.04em}
+      .history-list{display:grid;gap:7px}
+      .history-row{
+        display:flex;align-items:center;gap:10px;
+        background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-size:14px;
+      }
+      .history-row .h-num{font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;letter-spacing:.12em}
+      .history-row .h-round{color:var(--muted);font-weight:700;font-size:12.5px;min-width:38px}
+      .badge{margin-left:auto;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap}
+      .badge.ok{background:var(--good-bg);color:var(--good)}
+      .badge.ng{background:var(--bad-bg);color:var(--bad)}
+      .result-actions{display:grid;gap:10px}
+      @media(min-width:560px){.result-actions{grid-template-columns:1fr 1fr}.result-actions .btn-primary{width:100%}}
+
+      .screen{display:none}
+      .screen.is-on{display:block}
+
+      .sound-row{display:flex;justify-content:flex-end;margin-bottom:10px}
+      .sound-btn{
+        border:1px solid var(--line);background:var(--surface);color:var(--muted);
+        font-size:13px;font-weight:700;padding:7px 12px;border-radius:999px;
+        display:inline-flex;align-items:center;gap:6px;box-shadow:var(--shadow-sm);
+      }
+      .sound-btn[aria-pressed="true"]{color:var(--ink);border-color:var(--line-strong)}
+
+      /* Celebration: fireworks + Kurotan dance (hard mode correct only) */
+      .celebration{position:fixed;inset:0;display:none;pointer-events:none;z-index:60;overflow:hidden}
+      .celebration.is-on{display:block}
+      .fw-particle{position:absolute;width:9px;height:9px;border-radius:999px;opacity:0;animation:fwBurst 1s ease-out forwards}
+      @keyframes fwBurst{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.55)}}
+      .kurotan-wrap{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);text-align:center;animation:kuroEntrance .3s ease both}
+      @keyframes kuroEntrance{from{opacity:0}to{opacity:1}}
+      .kurotan-dance{animation:kuroDance .45s ease-in-out infinite alternate;transform-origin:50% 90%}
+      @keyframes kuroDance{from{transform:translateY(0) rotate(-5deg)}to{transform:translateY(-16px) rotate(5deg)}}
+      .kurotan-arm-l{transform-box:fill-box;transform-origin:90% 20%;animation:kuroArmL .45s ease-in-out infinite alternate}
+      .kurotan-arm-r{transform-box:fill-box;transform-origin:10% 20%;animation:kuroArmR .45s ease-in-out infinite alternate}
+      @keyframes kuroArmL{from{transform:rotate(18deg)}to{transform:rotate(-32deg)}}
+      @keyframes kuroArmR{from{transform:rotate(-18deg)}to{transform:rotate(32deg)}}
+      .kurotan-eye{filter:drop-shadow(0 0 5px rgba(239,68,68,.95)) drop-shadow(0 0 12px rgba(239,68,68,.6))}
+      .kurotan-label{display:inline-block;margin-top:2px;background:var(--ink);color:var(--surface);font-family:"M PLUS Rounded 1c",sans-serif;font-weight:800;font-size:15px;padding:5px 14px;border-radius:999px;box-shadow:var(--shadow)}
+      @media (prefers-color-scheme: dark){.kurotan-label{background:var(--surface);color:var(--ink)}}
+
+      @keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+      .pop{animation:popIn .28s ease both}
+      @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+      .shake{animation:shake .4s ease}
+      @media (prefers-reduced-motion: reduce){
+        .pop,.shake,.kurotan-dance,.kurotan-arm-l,.kurotan-arm-r,.fw-particle{animation:none}
+        .fw-particle{display:none}
+        .progress-fill,.timer-fill{transition:none !important}
+        *{scroll-behavior:auto !important}
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <div class="sound-row">
+        <button type="button" class="sound-btn" id="soundBtn" aria-pressed="true" aria-label="音のオン・オフを切り替える">
+          <span id="soundIcon" aria-hidden="true">♪</span><span id="soundText">音あり</span>
+        </button>
+      </div>
+
+      <!-- Stats bar -->
+      <div class="stats" id="statsBar" aria-live="polite">
+        <div class="stat">
+          <div class="stat-label">もんだい</div>
+          <div class="stat-value"><span id="statRound">–</span><small> / 10</small></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">スコア</div>
+          <div class="stat-value" id="statScore">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">れんぞくせいかい</div>
+          <div class="stat-value"><span class="flame" aria-hidden="true">●</span> <span id="statStreak">0</span><small> 回</small></div>
+        </div>
+      </div>
+      <div class="progress-track" id="progressTrack" aria-hidden="true">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+
+      <!-- START -->
+      <section class="screen is-on" id="screenStart" aria-labelledby="startTitle">
+        <div class="card">
+          <p class="lead">きおく力チャレンジ ・ 全10問</p>
+          <h1 id="startTitle">数字をパッと見て、<br />しっかり覚えよう！</h1>
+          <p class="intro">フラッシュカードで数字が短い時間だけ表示されます。消えたあと、「選ぶ」モードでは4つの答えの中から、「並べ替え」モードではバラバラになった数字を正しい順番に並べ替えて答えてください。何問正解できるか、記憶力をためしてみましょう。</p>
+
+          <div class="how" aria-label="あそび方">
+            <div class="how-item">
+              <div class="how-num" aria-hidden="true">1</div>
+              <strong>数字を見る</strong>
+              <span>カードに数字が出ます。消える前に覚えてください。</span>
+            </div>
+            <div class="how-item">
+              <div class="how-num" aria-hidden="true">2</div>
+              <strong>頭の中でくり返す</strong>
+              <span>消えたら、心の中で数字を言ってみると覚えやすいです。</span>
+            </div>
+            <div class="how-item">
+              <div class="how-num" aria-hidden="true">3</div>
+              <strong>思い出して答える</strong>
+              <span>選ぶモードでは似ている数字の中から、並べ替えではバラバラの数字を順番にタップして答えます。</span>
+            </div>
+          </div>
+
+          <p class="field-label" id="modeLabel">モードを選ぶ</p>
+          <div class="mode-grid" role="group" aria-labelledby="modeLabel">
+            <button type="button" class="diff-btn mode-btn" data-mode="choice" aria-pressed="true">
+              <span class="diff-name">選ぶ</span>
+              <span class="diff-desc">4つの選択肢から、覚えた数字と同じものを選びます。正解の場所は毎回変わります。</span>
+            </button>
+            <button type="button" class="diff-btn mode-btn" data-mode="sort" aria-pressed="false">
+              <span class="diff-name">並べ替え</span>
+              <span class="diff-desc">バラバラになった数字をタップして、見た順番どおりに並べ替えます。順番まで覚える力がためされます。</span>
+            </button>
+          </div>
+
+          <p class="field-label" id="diffLabel">むずかしさを選ぶ</p>
+          <div class="diff-grid" role="group" aria-labelledby="diffLabel">
+            <button type="button" class="diff-btn" data-diff="easy" aria-pressed="true">
+              <span class="diff-name">かんたん <span class="diff-digits">3けた</span></span>
+              <span class="diff-desc">はじめての人におすすめ。数字が少なくて覚えやすいです。</span>
+              <span class="diff-time">表示時間：2.5秒</span>
+            </button>
+            <button type="button" class="diff-btn" data-diff="normal" aria-pressed="false">
+              <span class="diff-name">ふつう <span class="diff-digits">6けた</span></span>
+              <span class="diff-desc">けたが増えて、まちがいの選択肢も正解とよく似ています。集中力が必要です。</span>
+              <span class="diff-time">表示時間：2.5秒</span>
+            </button>
+            <button type="button" class="diff-btn" data-diff="hard" aria-pressed="false">
+              <span class="diff-name">チャレンジ <span class="diff-digits">9けた</span></span>
+              <span class="diff-desc">5年生でも歯ごたえ十分。数字は9けた、まちがいは1けた違いや入れ替えばかりです。区切って覚えるのがコツです。</span>
+              <span class="diff-time">表示時間：3.5秒</span>
+            </button>
+          </div>
+
+          <button type="button" class="btn-primary" id="startBtn">ゲームスタート</button>
+          <p class="note">1問100点 ＋ 連続正解ボーナスがあります。全10問終わると結果が出ます。</p>
+        </div>
+      </section>
+
+      <!-- GAME -->
+      <section class="screen" id="screenGame" aria-labelledby="phaseTitle">
+        <div class="card">
+          <div class="phase-label">
+            <div>
+              <div class="phase-title" id="phaseTitle">よく見て覚えてね</div>
+              <div class="phase-sub" id="phaseSub">数字が消える前に覚えよう</div>
+            </div>
+            <button type="button" class="quit-btn" id="quitBtn">やめる</button>
+          </div>
+
+          <div class="flash-area" id="flashArea" aria-live="polite">
+            <div id="flashContent"></div>
+            <div class="timer-track" id="timerTrack" hidden>
+              <div class="timer-fill" id="timerFill"></div>
+            </div>
+            <div class="timer-caption" id="timerCaption" hidden>消えるまであと少し…</div>
+          </div>
+
+          <div class="tip" id="memoryTip" hidden>
+            覚えるコツ：数字を「12・34・5」のように小さなかたまりに区切ると、覚えやすくなります。
+          </div>
+
+          <div class="choices" id="choicesBox">
+            <p class="choices-title">さっき見た数字はどれ？</p>
+            <div class="choice-grid" id="choiceGrid" role="group" aria-label="答えの選択肢"></div>
+          </div>
+
+          <div class="sort-box" id="sortBox">
+            <p class="choices-title">バラバラになった数字を、正しい順番に並べ替えよう</p>
+            <div class="sort-label">あなたの答え（左が最初）</div>
+            <div class="sort-answer" id="sortAnswer" aria-live="polite"></div>
+            <div class="sort-label">下の数字を、見た順番にタップしよう</div>
+            <div class="sort-tiles" id="sortTiles" role="group" aria-label="バラバラになった数字"></div>
+            <div class="sort-actions">
+              <button type="button" class="sort-sub-btn" id="sortUndoBtn">1つもどす</button>
+              <button type="button" class="sort-sub-btn" id="sortClearBtn">ぜんぶ消す</button>
+              <button type="button" class="sort-submit" id="sortSubmitBtn">これで答える</button>
+            </div>
+          </div>
+
+          <div class="feedback" id="feedbackBox" role="status">
+            <div class="feedback-title" id="feedbackTitle"></div>
+            <div class="feedback-body" id="feedbackBody"></div>
+          </div>
+
+          <div class="next-wrap" id="nextWrap">
+            <button type="button" class="btn-primary" id="nextBtn">つぎの問題へ</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RESULT -->
+      <section class="screen" id="screenResult" aria-labelledby="resultTitle">
+        <div class="card">
+          <div class="result-hero">
+            <div class="stars" id="starsBox" aria-hidden="true"></div>
+            <h1 class="result-title" id="resultTitle">よくがんばったね！</h1>
+            <p class="result-msg" id="resultMsg"></p>
+            <div class="score-big" id="finalScore">0</div>
+            <div class="score-label">TOTAL SCORE ・ 点</div>
+          </div>
+
+          <div class="result-stats">
+            <div class="rstat"><b id="rCorrect">0 / 10</b><span>正解数</span></div>
+            <div class="rstat"><b id="rStreak">0回</b><span>最高連続正解</span></div>
+            <div class="rstat"><b id="rDiff">かんたん</b><span>難易度</span></div>
+          </div>
+
+          <div class="history">
+            <h2 id="historyTitle">今回の記録</h2>
+            <div class="history-list" id="historyList"></div>
+          </div>
+
+          <div class="result-actions">
+            <button type="button" class="btn-primary" id="againBtn">もう一回あそぶ</button>
+            <button type="button" class="btn-secondary" id="changeDiffBtn">難易度を変える</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Celebration overlay: shown only on a correct answer in チャレンジ -->
+    <div class="celebration" id="celebration" aria-hidden="true">
+      <div id="fireworksBox"></div>
+      <div class="kurotan-wrap">
+        <svg class="kurotan-dance" width="168" height="158" viewBox="0 0 200 190" role="img" aria-label="踊るくろたん">
+          <ellipse cx="72" cy="176" rx="20" ry="8" fill="#0b0f16"/>
+          <ellipse cx="130" cy="176" rx="20" ry="8" fill="#0b0f16"/>
+          <g class="kurotan-arm-l"><ellipse cx="30" cy="108" rx="22" ry="10" fill="#0b0f16" transform="rotate(-38 30 108)"/></g>
+          <g class="kurotan-arm-r"><ellipse cx="170" cy="108" rx="22" ry="10" fill="#0b0f16" transform="rotate(38 170 108)"/></g>
+          <g fill="#141a24">
+            <circle cx="100" cy="52" r="34"/><circle cx="62" cy="66" r="30"/><circle cx="138" cy="66" r="30"/>
+            <circle cx="46" cy="102" r="28"/><circle cx="154" cy="102" r="28"/>
+            <circle cx="58" cy="138" r="30"/><circle cx="142" cy="138" r="30"/>
+            <ellipse cx="100" cy="108" rx="58" ry="62"/>
+            <circle cx="78" cy="34" r="16"/><circle cx="104" cy="27" r="15"/><circle cx="128" cy="38" r="14"/>
+            <circle cx="40" cy="82" r="13"/><circle cx="160" cy="82" r="13"/>
+            <circle cx="46" cy="122" r="13"/><circle cx="154" cy="122" r="13"/>
+          </g>
+          <circle class="kurotan-eye" cx="82" cy="98" r="8" fill="#ef4444"/>
+          <circle class="kurotan-eye" cx="118" cy="98" r="8" fill="#ef4444"/>
+          <circle cx="84.5" cy="95.5" r="2.4" fill="#fecaca"/>
+          <circle cx="120.5" cy="95.5" r="2.4" fill="#fecaca"/>
+          <path d="M88 122 Q100 132 112 122" fill="none" stroke="#f8fafc" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="64" cy="116" r="6" fill="#334155" opacity=".7"/>
+          <circle cx="136" cy="116" r="6" fill="#334155" opacity=".7"/>
+        </svg>
+        <div><span class="kurotan-label">くろたんも大よろこび！</span></div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var TOTAL_ROUNDS = 10;
+        var DIFFS = {
+          easy:   { label: "かんたん",   digits: 3, time: 2500 },
+          normal: { label: "ふつう",     digits: 6, time: 2500 },
+          hard:   { label: "チャレンジ", digits: 9, time: 3500 }
+        };
+        var MODES = {
+          choice: { label: "選ぶ" },
+          sort:   { label: "並べ替え" }
+        };
+        var TIPS = [
+          "覚えるコツ：数字を「12・34・5」のように小さなかたまりに区切ると、覚えやすくなります。",
+          "覚えるコツ：見た数字を、心の中で声に出すようにくり返すと残りやすいです。",
+          "覚えるコツ：最初の数字と最後の数字をとくに意識すると、真ん中も思い出しやすくなります。",
+          "覚えるコツ：数字を形やリズムで覚える人もいます。自分に合う方法を探してみましょう。"
+        ];
+
+        var state = {
+          diffKey: "easy",
+          mode: "choice",
+          round: 0,
+          score: 0,
+          streak: 0,
+          bestStreak: 0,
+          correctCount: 0,
+          current: "",
+          choices: [],
+          correctIndex: -1,
+          lastCorrectIndex: -1,
+          sortTiles: [],
+          sortPicked: [],
+          answered: false,
+          history: [],
+          timers: [],
+          sound: true
+        };
+
+        // Elements
+        function $(id) { return document.getElementById(id); }
+        var screenStart = $("screenStart"), screenGame = $("screenGame"), screenResult = $("screenResult");
+        var statsBar = $("statsBar"), progressTrack = $("progressTrack"), progressFill = $("progressFill");
+        var statRound = $("statRound"), statScore = $("statScore"), statStreak = $("statStreak");
+        var phaseTitle = $("phaseTitle"), phaseSub = $("phaseSub");
+        var flashArea = $("flashArea"), flashContent = $("flashContent");
+        var timerTrack = $("timerTrack"), timerFill = $("timerFill"), timerCaption = $("timerCaption");
+        var memoryTip = $("memoryTip");
+        var choicesBox = $("choicesBox"), choiceGrid = $("choiceGrid");
+        var sortBox = $("sortBox"), sortAnswer = $("sortAnswer"), sortTilesBox = $("sortTiles");
+        var sortUndoBtn = $("sortUndoBtn"), sortClearBtn = $("sortClearBtn"), sortSubmitBtn = $("sortSubmitBtn");
+        var celebration = $("celebration"), fireworksBox = $("fireworksBox");
+        var feedbackBox = $("feedbackBox"), feedbackTitle = $("feedbackTitle"), feedbackBody = $("feedbackBody");
+        var nextWrap = $("nextWrap"), nextBtn = $("nextBtn");
+
+        // Sound (Web Audio, created on user gesture)
+        var audioCtx = null;
+        function ensureAudio() {
+          if (!state.sound) return null;
+          try {
+            if (!audioCtx) {
+              var AC = window.AudioContext || window.webkitAudioContext;
+              if (!AC) return null;
+              audioCtx = new AC();
+            }
+            if (audioCtx.state === "suspended") audioCtx.resume();
+            return audioCtx;
+          } catch (e) { return null; }
+        }
+        function beep(freq, dur, delay, type) {
+          var ctx = ensureAudio();
+          if (!ctx) return;
+          try {
+            var t = ctx.currentTime + (delay || 0);
+            var osc = ctx.createOscillator();
+            var gain = ctx.createGain();
+            osc.type = type || "sine";
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.0001, t);
+            gain.gain.exponentialRampToValueAtTime(0.12, t + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(t); osc.stop(t + dur + 0.05);
+          } catch (e) {}
+        }
+        function soundCorrect() { beep(660, 0.14, 0); beep(880, 0.18, 0.12); }
+        function soundWrong() { beep(220, 0.22, 0, "triangle"); }
+        function soundTick() { beep(520, 0.07, 0, "sine"); }
+
+        $("soundBtn").addEventListener("click", function () {
+          state.sound = !state.sound;
+          this.setAttribute("aria-pressed", state.sound ? "true" : "false");
+          $("soundText").textContent = state.sound ? "音あり" : "音なし";
+          $("soundIcon").textContent = state.sound ? "♪" : "―";
+          if (state.sound) soundTick();
+        });
+
+        // Difficulty selection (mode buttons also carry .diff-btn styling, so exclude them here)
+        var diffBtns = Array.prototype.slice.call(document.querySelectorAll(".diff-btn[data-diff]"));
+        diffBtns.forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            state.diffKey = btn.getAttribute("data-diff");
+            diffBtns.forEach(function (b) { b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
+            soundTick();
+          });
+        });
+
+        // Mode selection
+        var modeBtns = Array.prototype.slice.call(document.querySelectorAll(".mode-btn"));
+        modeBtns.forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            state.mode = btn.getAttribute("data-mode");
+            modeBtns.forEach(function (b) { b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
+            soundTick();
+          });
+        });
+
+        // Celebration: fireworks + dancing Kurotan, only for チャレンジ correct answers
+        var celebrationTimer = null;
+        function launchCelebration() {
+          if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+          celebration.classList.remove("is-on");
+          fireworksBox.innerHTML = "";
+          // Force restart of the Kurotan dance animation
+          void celebration.offsetWidth;
+          var colors = ["#f59e0b", "#ef4444", "#0f766e", "#e4572e", "#3b82f6", "#ec4899"];
+          for (var b = 0; b < 4; b++) {
+            var cx = 14 + Math.random() * 72;
+            var cy = 10 + Math.random() * 32;
+            var color = colors[b % colors.length];
+            for (var p = 0; p < 14; p++) {
+              var angle = (Math.PI * 2 * p) / 14 + (Math.random() * 0.3);
+              var dist = 62 + Math.random() * 58;
+              var dot = document.createElement("span");
+              dot.className = "fw-particle";
+              dot.style.left = cx + "%";
+              dot.style.top = cy + "%";
+              dot.style.background = color;
+              dot.style.setProperty("--dx", Math.cos(angle) * dist + "px");
+              dot.style.setProperty("--dy", Math.sin(angle) * dist + "px");
+              dot.style.animationDelay = (b * 0.18) + "s";
+              fireworksBox.appendChild(dot);
+            }
+          }
+          celebration.classList.add("is-on");
+          if (celebrationTimer) clearTimeout(celebrationTimer);
+          celebrationTimer = setTimeout(function () {
+            celebration.classList.remove("is-on");
+            fireworksBox.innerHTML = "";
+          }, 2100);
+        }
+
+        function clearTimers() {
+          state.timers.forEach(function (id) { clearTimeout(id); });
+          state.timers = [];
+        }
+        function later(fn, ms) {
+          var id = setTimeout(fn, ms);
+          state.timers.push(id);
+          return id;
+        }
+
+        function showScreen(which) {
+          [screenStart, screenGame, screenResult].forEach(function (s) { s.classList.remove("is-on"); });
+          which.classList.add("is-on");
+          var inGame = which === screenGame;
+          statsBar.classList.toggle("is-on", inGame);
+          progressTrack.classList.toggle("is-on", inGame);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function updateStats() {
+          statRound.textContent = Math.min(state.round, TOTAL_ROUNDS);
+          statScore.textContent = state.score;
+          statStreak.textContent = state.streak;
+          progressFill.style.width = ((state.round - 1) / TOTAL_ROUNDS * 100) + "%";
+        }
+
+        function randomNumberString(len) {
+          var s = "";
+          for (var i = 0; i < len; i++) {
+            var d;
+            if (i === 0) { d = 1 + Math.floor(Math.random() * 9); } // 先頭は0にしない
+            else { d = Math.floor(Math.random() * 10); }
+            s += String(d);
+          }
+          return s;
+        }
+
+        function shuffle(arr) {
+          var a = arr.slice();
+          for (var i = a.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+          }
+          return a;
+        }
+
+        function makeDistractors(correct, diffKey) {
+          var set = {};
+          set[correct] = true;
+          var out = [];
+          var guard = 0;
+          var closeOnly = diffKey === "normal" || diffKey === "hard";
+          function tryAdd(candidate) {
+            if (candidate && candidate.length === correct.length && candidate[0] !== "0" && !set[candidate]) {
+              set[candidate] = true; out.push(candidate); return true;
+            }
+            return false;
+          }
+          function swapAt(c, i, j) { var t = c[i]; c[i] = c[j]; c[j] = t; }
+          while (out.length < 3 && guard < 300) {
+            guard++;
+            // ふつう・チャレンジは「よく似た数字」だけを使う：隣の入れ替え、どこか2つの入れ替え、1けただけ近い数字に変える
+            var kind = Math.floor(Math.random() * (closeOnly ? 3 : 5));
+            var c = correct.split("");
+            if (kind === 0 && c.length > 1) {
+              // 隣り合う2つを入れ替える
+              var i = Math.floor(Math.random() * (c.length - 1));
+              if (c[i] !== c[i + 1]) { swapAt(c, i, i + 1); tryAdd(c.join("")); }
+            } else if (kind === 1) {
+              // 離れた2つを入れ替える
+              var a = Math.floor(Math.random() * c.length);
+              var b = Math.floor(Math.random() * c.length);
+              if (a !== b && c[a] !== c[b]) { swapAt(c, a, b); tryAdd(c.join("")); }
+            } else if (kind === 2) {
+              // 1けただけ変える（チャレンジでは ±1 の近い数字を優先して、より見分けにくくする）
+              var p = Math.floor(Math.random() * c.length);
+              var orig = parseInt(c[p], 10);
+              var nd;
+              if (diffKey === "hard" && Math.random() < 0.7) {
+                var delta = Math.random() < 0.5 ? -1 : 1;
+                var near = orig + delta;
+                if (near < 0 || near > 9 || (p === 0 && near === 0)) near = orig - delta;
+                nd = String(near);
+              } else {
+                do { nd = String(Math.floor(Math.random() * 10)); } while (nd === c[p] || (p === 0 && nd === "0"));
+              }
+              if (nd !== c[p]) { c[p] = nd; tryAdd(c.join("")); }
+            } else if (kind === 3 && c.length > 2) {
+              // 逆順にする（かんたんのみ）
+              tryAdd(c.slice().reverse().join(""));
+            } else if (!closeOnly) {
+              // シャッフルする（かんたんのみ）
+              var sh = shuffle(c);
+              if (sh[0] !== "0") tryAdd(sh.join(""));
+            }
+          }
+          // 足りなければ、1けたずつ順番に変えた「似た数字」で必ず補う
+          var pos = 0;
+          while (out.length < 3 && pos < correct.length * 10) {
+            var pp = Math.floor(pos / 10) % correct.length;
+            var repl = String((parseInt(correct[pp], 10) + 1 + (pos % 9)) % 10);
+            var cand = correct.split("");
+            cand[pp] = repl;
+            if (!tryAdd(cand.join(""))) pos++;
+            else pos++;
+          }
+          while (out.length < 3) {
+            tryAdd(randomNumberString(correct.length));
+          }
+          return out;
+        }
+
+        // 正解の位置は毎回ランダムに決め、前回と同じ位置は選ばない（＝同じ位置が続かない）
+        function pickCorrectIndex() {
+          var candidates = [];
+          for (var i = 0; i < 4; i++) {
+            if (i !== state.lastCorrectIndex) candidates.push(i);
+          }
+          var idx = candidates[Math.floor(Math.random() * candidates.length)];
+          state.correctIndex = idx;
+          state.lastCorrectIndex = idx;
+          return idx;
+        }
+
+        function buildChoices() {
+          var distractors = shuffle(makeDistractors(state.current, state.diffKey));
+          var idx = pickCorrectIndex();
+          var choices = [];
+          var d = 0;
+          for (var i = 0; i < 4; i++) {
+            if (i === idx) choices.push(state.current);
+            else { choices.push(distractors[d]); d++; }
+          }
+          return choices;
+        }
+
+        function renderDigits(str) {
+          var len = str.length;
+          var sizeCls = len >= 9 ? " is-xsmall" : (len >= 6 ? " is-small" : "");
+          var html = '<div class="digits pop' + (len >= 9 ? " is-tight" : "") + '" aria-label="数字 ' + str.split("").join(" ") + '">';
+          str.split("").forEach(function (d) {
+            html += '<span class="digit-tile' + sizeCls + '" aria-hidden="true">' + d + "</span>";
+          });
+          html += "</div>";
+          return html;
+        }
+
+        function startGame() {
+          clearTimers();
+          state.round = 0;
+          state.score = 0;
+          state.streak = 0;
+          state.bestStreak = 0;
+          state.correctCount = 0;
+          state.history = [];
+          state.correctIndex = -1;
+          state.lastCorrectIndex = -1;
+          state.sortTiles = [];
+          state.sortPicked = [];
+          ensureAudio();
+          showScreen(screenGame);
+          startRound();
+        }
+
+        function startRound() {
+          clearTimers();
+          state.round += 1;
+          state.answered = false;
+          var diff = DIFFS[state.diffKey];
+          state.current = randomNumberString(diff.digits);
+          state.choices = state.mode === "choice" ? buildChoices() : [];
+          state.sortTiles = [];
+          state.sortPicked = [];
+          updateStats();
+
+          // UI reset
+          choicesBox.classList.remove("is-on");
+          sortBox.classList.remove("is-on", "is-good", "is-bad");
+          feedbackBox.classList.remove("is-on", "is-good", "is-bad");
+          nextWrap.classList.remove("is-on");
+          choiceGrid.innerHTML = "";
+          sortAnswer.innerHTML = "";
+          sortTilesBox.innerHTML = "";
+          flashArea.classList.remove("is-live", "shake");
+          timerTrack.hidden = true;
+          timerCaption.hidden = true;
+          memoryTip.hidden = true;
+
+          // Countdown phase: 3・2・1
+          phaseTitle.textContent = "第" + state.round + "問 ・ よーい…";
+          phaseSub.textContent = "数字が出るよ。目をこらして見てね";
+          var count = 3;
+          function showCount() {
+            if (count >= 1) {
+              flashContent.innerHTML = '<div class="countdown-num pop">' + count + '</div><div class="countdown-text">数字が出るまで</div>';
+              soundTick();
+              count--;
+              later(showCount, 620);
+            } else {
+              showFlash();
+            }
+          }
+          showCount();
+        }
+
+        function showFlash() {
+          var diff = DIFFS[state.diffKey];
+          phaseTitle.textContent = "よく見て覚えてね！";
+          phaseSub.textContent = diff.digits + "けたの数字 ・ " + (diff.time / 1000) + "秒だけ表示されます";
+          flashArea.classList.add("is-live");
+          flashContent.innerHTML = renderDigits(state.current);
+          memoryTip.hidden = false;
+          memoryTip.textContent = TIPS[(state.round - 1) % TIPS.length];
+
+          // Timer bar
+          timerTrack.hidden = false;
+          timerCaption.hidden = false;
+          timerFill.classList.remove("animate");
+          timerFill.style.width = "100%";
+          // 次フレームでアニメーション開始
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              timerFill.classList.add("animate");
+              timerFill.style.transitionDuration = diff.time + "ms";
+              timerFill.style.width = "0%";
+            });
+          });
+
+          later(showQuestion, diff.time);
+        }
+
+        function showQuestion() {
+          flashArea.classList.remove("is-live");
+          flashContent.innerHTML = '<div class="hidden-mark" aria-hidden="true">？？？</div><div class="hidden-text">数字は消えました</div>';
+          timerTrack.hidden = true;
+          timerCaption.hidden = true;
+          memoryTip.hidden = true;
+
+          if (state.mode === "sort") {
+            phaseTitle.textContent = "順番を思い出して並べ替えよう！";
+            phaseSub.textContent = "バラバラになった数字を、さっき見た順番にタップしてください";
+            showSortQuestion();
+            return;
+          }
+
+          phaseTitle.textContent = "思い出して選ぼう！";
+          phaseSub.textContent = "さっき見た数字と同じものを選んでください";
+
+          choiceGrid.innerHTML = "";
+          state.choices.forEach(function (choice, idx) {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "choice-btn";
+            btn.setAttribute("data-value", choice);
+            btn.innerHTML = '<span class="choice-key" aria-hidden="true">' + (idx + 1) + '</span><span class="choice-num' + (choice.length >= 9 ? " is-long" : "") + '">' + choice.split("").join(" ") + "</span>";
+            btn.setAttribute("aria-label", "選択肢" + (idx + 1) + "：" + choice.split("").join(" "));
+            btn.addEventListener("click", function () { onChoose(btn, choice); });
+            choiceGrid.appendChild(btn);
+          });
+          choicesBox.classList.add("is-on");
+        }
+
+        /* ---- Sort mode ---- */
+        function shuffledDigits(str) {
+          var arr = str.split("");
+          for (var attempt = 0; attempt < 60; attempt++) {
+            var sh = shuffle(arr);
+            if (sh.join("") !== str) return sh;
+          }
+          for (var i = 0; i < arr.length; i++) {
+            for (var j = i + 1; j < arr.length; j++) {
+              if (arr[i] !== arr[j]) {
+                var copy = arr.slice();
+                var t = copy[i]; copy[i] = copy[j]; copy[j] = t;
+                return copy;
+              }
+            }
+          }
+          return arr; // 全て同じ数字のときはそのまま
+        }
+
+        function showSortQuestion() {
+          var chars = shuffledDigits(state.current);
+          state.sortTiles = chars.map(function (d, i) { return { id: i, digit: d, used: false }; });
+          state.sortPicked = [];
+          sortBox.classList.remove("is-good", "is-bad");
+          sortBox.classList.add("is-on");
+          renderSort();
+        }
+
+        function sortPickedString() {
+          return state.sortPicked.map(function (id) {
+            var tile = state.sortTiles[id];
+            return tile ? tile.digit : "";
+          }).join("");
+        }
+
+        function renderSort() {
+          var len = state.current.length;
+          var small = len >= 9 ? " is-xsmall" : "";
+          sortAnswer.innerHTML = "";
+          for (var pos = 0; pos < len; pos++) {
+            var slot = document.createElement("span");
+            var has = pos < state.sortPicked.length;
+            slot.className = "sort-slot" + small + (has ? " is-filled" : "");
+            slot.textContent = has ? state.sortTiles[state.sortPicked[pos]].digit : "・";
+            sortAnswer.appendChild(slot);
+          }
+          sortTilesBox.innerHTML = "";
+          state.sortTiles.forEach(function (tile) {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "sort-tile" + small;
+            btn.textContent = tile.digit;
+            btn.disabled = tile.used || state.answered;
+            btn.setAttribute("aria-label", "数字 " + tile.digit + (tile.used ? "（使用済み）" : ""));
+            btn.addEventListener("click", function () { pickSortTile(tile.id); });
+            sortTilesBox.appendChild(btn);
+          });
+          var full = state.sortPicked.length === len;
+          sortSubmitBtn.disabled = !full || state.answered;
+          sortUndoBtn.disabled = state.sortPicked.length === 0 || state.answered;
+          sortClearBtn.disabled = state.sortPicked.length === 0 || state.answered;
+        }
+
+        function pickSortTile(id) {
+          if (state.answered) return;
+          var tile = state.sortTiles[id];
+          if (!tile || tile.used) return;
+          tile.used = true;
+          state.sortPicked.push(id);
+          soundTick();
+          renderSort();
+        }
+        function undoSort() {
+          if (state.answered || state.sortPicked.length === 0) return;
+          var id = state.sortPicked.pop();
+          state.sortTiles[id].used = false;
+          soundTick();
+          renderSort();
+        }
+        function clearSort() {
+          if (state.answered) return;
+          state.sortTiles.forEach(function (t) { t.used = false; });
+          state.sortPicked = [];
+          soundTick();
+          renderSort();
+        }
+        sortUndoBtn.addEventListener("click", undoSort);
+        sortClearBtn.addEventListener("click", clearSort);
+        sortSubmitBtn.addEventListener("click", function () {
+          if (state.answered || state.sortPicked.length !== state.current.length) return;
+          state.answered = true;
+          var picked = sortPickedString();
+          sortBox.classList.add(picked === state.current ? "is-good" : "is-bad");
+          renderSort();
+          applyResult(picked === state.current, picked);
+        });
+
+        /* ---- Shared scoring / feedback ---- */
+        function applyResult(isCorrect, picked) {
+          var gained = 0;
+          if (isCorrect) {
+            state.streak += 1;
+            state.bestStreak = Math.max(state.bestStreak, state.streak);
+            state.correctCount += 1;
+            gained = 100 + Math.max(0, (state.streak - 1) * 20);
+            state.score += gained;
+            soundCorrect();
+            if (state.diffKey === "hard") launchCelebration();
+            feedbackBox.classList.add("is-good");
+            feedbackTitle.textContent = state.streak >= 3 ? "せいかい！ " + state.streak + "連続正解！" : "せいかい！";
+            feedbackBody.innerHTML = "+" + gained + "点" + (state.streak >= 2 ? "（連続正解ボーナス +" + ((state.streak - 1) * 20) + "点）" : "") + " ・ その調子です。";
+          } else {
+            state.streak = 0;
+            soundWrong();
+            flashArea.classList.add("shake");
+            feedbackBox.classList.add("is-bad");
+            feedbackTitle.textContent = "ざんねん… おしい！";
+            feedbackBody.innerHTML = "正解は <strong>" + state.current.split("").join(" ") + "</strong> でした。" + (state.mode === "sort" ? "並べた順番と見くらべてみましょう。" : "選んだ数字と見くらべてみましょう。");
+          }
+
+          state.history.push({ round: state.round, answer: state.current, picked: picked, ok: isCorrect });
+          updateStats();
+          progressFill.style.width = (state.round / TOTAL_ROUNDS * 100) + "%";
+
+          feedbackBox.classList.add("is-on");
+          nextBtn.textContent = state.round >= TOTAL_ROUNDS ? "結果を見る" : "つぎの問題へ";
+          nextWrap.classList.add("is-on");
+          nextBtn.focus({ preventScroll: false });
+        }
+
+        function onChoose(btn, choice) {
+          if (state.answered) return;
+          state.answered = true;
+          var isCorrect = choice === state.current;
+
+          var buttons = Array.prototype.slice.call(choiceGrid.querySelectorAll(".choice-btn"));
+          buttons.forEach(function (b) {
+            b.disabled = true;
+            var v = b.getAttribute("data-value");
+            if (v === state.current) b.classList.add("is-correct");
+            else if (b === btn) b.classList.add("is-wrong");
+            else b.classList.add("is-dim");
+          });
+
+          applyResult(isCorrect, choice);
+        }
+
+        nextBtn.addEventListener("click", function () {
+          soundTick();
+          if (state.round >= TOTAL_ROUNDS) showResult();
+          else startRound();
+        });
+
+        $("quitBtn").addEventListener("click", function () {
+          clearTimers();
+          celebration.classList.remove("is-on");
+          fireworksBox.innerHTML = "";
+          showScreen(screenStart);
+          statsBar.classList.remove("is-on");
+          progressTrack.classList.remove("is-on");
+        });
+
+        function starSVG(on) {
+          return '<svg viewBox="0 0 24 24" fill="' + (on ? "currentColor" : "none") + '" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linejoin="round" d="M12 3.6l2.5 5.2 5.7.7-4.2 4 1.1 5.6L12 16.4l-5.1 2.7L8 13.5 3.8 9.5l5.7-.7z"/></svg>';
+        }
+
+        function showResult() {
+          clearTimers();
+          showScreen(screenResult);
+          var c = state.correctCount;
+          var stars = c >= 9 ? 3 : (c >= 6 ? 2 : (c >= 3 ? 1 : 0));
+          var starsHtml = "";
+          for (var i = 0; i < 3; i++) {
+            starsHtml += '<span class="' + (i < stars ? "star-on" : "star-off") + '">' + starSVG(i < stars) + "</span>";
+          }
+          $("starsBox").innerHTML = starsHtml;
+
+          var title, msg;
+          if (c === 10) { title = "かんぺき！ 記憶マスター！"; msg = "10問ぜんぶ正解です。数字を覚える力が本当にすばらしいです。この調子で上の難易度にも挑戦してみましょう。"; }
+          else if (c >= 8) { title = "すごい！ あと少しで満点！"; msg = "よく覚えられました。まちがえた問題は、区切り方を変えて覚えると次は正解できるかもしれません。"; }
+          else if (c >= 6) { title = "よくがんばったね！"; msg = "半分以上正解できました。数字を2つずつのかたまりで覚えるコツを使うと、もっと伸びます。"; }
+          else if (c >= 3) { title = "いい挑戦だったね！"; msg = "記憶は練習で伸びます。まずは「かんたん」でくり返し遊んで、覚えるコツをつかみましょう。"; }
+          else { title = "挑戦してくれてありがとう！"; msg = "はじめは難しくて当然です。「かんたん」から始めて、心の中で数字をくり返す練習をしてみましょう。"; }
+          $("resultTitle").textContent = title;
+          $("resultMsg").textContent = msg;
+          $("finalScore").textContent = state.score;
+          $("rCorrect").textContent = c + " / " + TOTAL_ROUNDS;
+          $("rStreak").textContent = state.bestStreak + "回";
+          $("rDiff").textContent = DIFFS[state.diffKey].label;
+          $("historyTitle").textContent = "今回の記録（" + MODES[state.mode].label + "・" + DIFFS[state.diffKey].label + "）";
+
+          var list = $("historyList");
+          list.innerHTML = "";
+          state.history.forEach(function (h) {
+            var row = document.createElement("div");
+            row.className = "history-row";
+            row.innerHTML = '<span class="h-round">第' + h.round + '問</span><span class="h-num">' + h.answer.split("").join(" ") + '</span><span class="badge ' + (h.ok ? "ok" : "ng") + '">' + (h.ok ? "正解" : "不正解") + "</span>";
+            if (!h.ok) {
+              row.title = (state.mode === "sort" ? "並べた答え：" : "選んだ答え：") + h.picked;
+            }
+            list.appendChild(row);
+          });
+        }
+
+        $("startBtn").addEventListener("click", startGame);
+        $("againBtn").addEventListener("click", startGame);
+        $("changeDiffBtn").addEventListener("click", function () {
+          showScreen(screenStart);
+        });
+
+        // Keyboard: 1-4 to choose / digits + Backspace + Enter in sort mode
+        document.addEventListener("keydown", function (e) {
+          if (!screenGame.classList.contains("is-on")) return;
+          if (state.answered) return;
+          if (choicesBox.classList.contains("is-on")) {
+            var n = parseInt(e.key, 10);
+            if (n >= 1 && n <= 4) {
+              var btns = choiceGrid.querySelectorAll(".choice-btn");
+              if (btns[n - 1]) btns[n - 1].click();
+            }
+          } else if (sortBox.classList.contains("is-on")) {
+            if (e.key === "Backspace") { e.preventDefault(); undoSort(); return; }
+            if (e.key === "Enter" && state.sortPicked.length === state.current.length) { sortSubmitBtn.click(); return; }
+            if (/^[0-9]$/.test(e.key)) {
+              for (var i = 0; i < state.sortTiles.length; i++) {
+                if (!state.sortTiles[i].used && state.sortTiles[i].digit === e.key) { pickSortTile(state.sortTiles[i].id); break; }
+              }
+            }
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
